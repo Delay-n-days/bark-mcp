@@ -1,0 +1,41 @@
+{
+  "name": "bark-mcp",
+  "version": "1.0.0",
+  "description": "Bark 推送测试台 + MCP 服务：给大模型用的 iOS 推送（含 Bark 官方 AES 加密）",
+  "type": "module",
+  "private": false,
+  "bin": {
+    "bark-mcp": "dist/bark-mcp.js"
+  },
+  "files": [
+    "dist/bark-mcp.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "bun run src/main.ts",
+    "dev:mcp": "bun run src/main.ts mcp",
+    "dev:http": "bun run src/main.ts",
+    "build": "bun run scripts/build.ts",
+    "test": "bun test",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "bark",
+    "bark-push",
+    "mcp",
+    "model-context-protocol",
+    "apns",
+    "ios-push",
+    "bun"
+  ],
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.7.3"
+  }
+}

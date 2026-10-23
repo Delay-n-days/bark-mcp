@@ -1,0 +1,11 @@
+node_modules/
+.env
+crypto_keys.json
+*.local
+.DS_Store
+python-legacy/.venv/
+__pycache__/
+
+# dist/ 只提交单文件产物，bunx 直接可用
+dist/*
+!dist/bark-mcp.js
