@@ -126,6 +126,13 @@ Claude Code / Codex 的 MCP 配置示例：
 bun dist/bark-mcp.js      # MCP 端点在 http://127.0.0.1:8787/mcp
 ```
 
+只监听 `127.0.0.1` 时该端点默认不校验令牌；一旦 `BARK_HOST` 不是回环地址，
+就必须带 `Authorization: Bearer <BARK_KEY>`（或设置 `BARK_REQUIRE_AUTH=1` 让本地也强制校验）：
+
+```bash
+pi mcp add bark --url http://127.0.0.1:8787/mcp --description "Bark iOS 推送：发通知、场景库、AES 加密"
+```
+
 ```json
 {
   "mcpServers": {
@@ -137,6 +144,8 @@ bun dist/bark-mcp.js      # MCP 端点在 http://127.0.0.1:8787/mcp
   }
 }
 ```
+
+如果服务端要求令牌，用 `pi mcp add bark --url http://127.0.0.1:8787/mcp --bearer-token-env-var BARK_KEY` 注入，别把 key 写进配置文件。
 
 HTTP 模式是有状态的：一次 `initialize` 建立一个会话，服务端每小时回收闲置会话；未知名会话返回 404，客户端重新 `initialize` 即可。
 
