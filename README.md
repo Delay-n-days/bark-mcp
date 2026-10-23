@@ -1,7 +1,8 @@
 # bark-mcp
 
-把 [Bark](https://bark.day.app)（iOS 推送）包成一个 **TypeScript / Bun** 的单文件服务：
+把 [Bark](https://bark.day.app)（iOS 推送）包成一个 **TypeScript** 的单文件服务：
 既可以在浏览器里当推送游乐场点着玩，也可以作为 **MCP 服务**让大模型直接给你的手机发通知。
+**Bun 和 Node（≥ 20）都能跑**，产物同一个文件。
 
 ```
 bunx bark-mcp          # 游乐场 + MCP (http://127.0.0.1:8787)
@@ -24,7 +25,7 @@ bunx bark-mcp mcp      # stdio MCP，给 Claude Code / Codex / Cursor 用
 
 ## 安装
 
-需要 [Bun](https://bun.sh) ≥ 1.1。
+需要 [Bun](https://bun.sh) ≥ 1.1 **或** Node ≥ 20，两者皆可，产物是同一个 `dist/bark-mcp.js`。
 
 ### 直接用发布产物
 
@@ -62,6 +63,30 @@ bun run build      # 产出 dist/bark-mcp.js 并做冒烟测试
 | `BARK_KEYS_FILE` | `./crypto_keys.json` | 自定义密钥文件；文件里合法的密钥优先于内置默认值 |
 
 `.env` 示例见 [`.env.example`](.env.example)。
+
+---
+
+## 运行环境
+
+两种运行时跑的是**同一个** `dist/bark-mcp.js`，不必重新构建：
+
+| 运行时 | CLI / stdio MCP | Web + HTTP MCP (`serve`) |
+| --- | --- | --- |
+| Bun ≥ 1.1 | ✅ | ✅ |
+| Node ≥ 20 | ✅ | ✅ |
+
+`serve` 走的是内置的 `node:http` 适配层（`src/node-adapter.ts`），把请求桥成标准
+`Request`/`Response` 交给 MCP SDK 的 Web 传输层，所以 SSE 流式响应在 Node 上也是正常的。
+用 Node 时把命令里的 `bun` 换成 `node` 即可：
+
+```bash
+node dist/bark-mcp.js          # 游乐场 + MCP
+node dist/bark-mcp.js mcp      # stdio MCP
+node dist/bark-mcp.js push --title hi --body hello
+```
+
+MCP 配置里同理，`"command": "node"` + `"args": ["/path/to/dist/bark-mcp.js", "mcp"]`。
+只有从源码构建（`bun run build`）需要 Bun，跑产物不需要。
 
 ---
 
@@ -234,6 +259,7 @@ src/
   bark.ts         Bark 客户端与推送编排
   scenarios.ts    场景库（Web 与 MCP 共用）
   http.ts         游乐场 + Streamable HTTP MCP
+  node-adapter.ts node:http ↔ Web Request/Response 桥接（让 Node 也能 serve）
   mcp/server.ts   MCP 工具定义与实现
   mcp/stdio.ts    stdio 入口
   web/index.html  游乐场页面（构建时以文本内联）

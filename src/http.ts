@@ -29,6 +29,7 @@ import {
   type AppConfig,
 } from "./config.ts";
 import { createSession, VERSION } from "./mcp/server.ts";
+import { serveNode } from "./node-adapter.ts";
 import { SCENARIO_GROUPS, findScenario } from "./scenarios.ts";
 import INDEX_HTML_RAW from "./web/index.html" with { type: "text" };
 
@@ -118,10 +119,22 @@ export interface StartServerOptions {
   fetchImpl?: typeof fetch;
 }
 
-export function startServer(options: StartServerOptions = {}): {
-  server: ReturnType<typeof Bun.serve>;
+export interface ServerHandle {
+  port: number;
+  stop: (force?: boolean) => Promise<void>;
+}
+
+export function startServer(options: StartServerOptions = {}): Promise<{
+  server: ServerHandle;
   url: string;
-} {
+}> {
+  return startServerAsync(options);
+}
+
+async function startServerAsync(options: StartServerOptions): Promise<{
+  server: ServerHandle;
+  url: string;
+}> {
   const config = options.config ?? loadConfig();
   const host = options.host ?? (process.env.BARK_HOST?.trim() || DEFAULT_HOST);
   const port =
@@ -183,11 +196,7 @@ export function startServer(options: StartServerOptions = {}): {
     return transport.handleRequest(req, { parsedBody: parsed });
   };
 
-  const server = Bun.serve({
-    hostname: host,
-    port,
-    idleTimeout: 120,
-    async fetch(req) {
+  const handler = async (req: Request): Promise<Response> => {
       const url = new URL(req.url);
       const path = url.pathname;
 
@@ -265,8 +274,9 @@ export function startServer(options: StartServerOptions = {}): {
         console.error("[bark-mcp] /api 出错:", message);
         return json({ ok: false, error: message }, 400);
       }
-    },
-  });
+  };
+
+  const nodeServer = await serveNode(handler, host, port);
 
   // 清理闲置 MCP 会话，避免长跑进程内存泄漏
   const reaper = setInterval(() => {
@@ -280,12 +290,12 @@ export function startServer(options: StartServerOptions = {}): {
   }, 60_000);
   reaper.unref?.();
 
-  return { server, url: `http://${host}:${server.port}` };
+  return { server: nodeServer, url: `http://${host}:${nodeServer.port}` };
 }
 
-export function runHttp(options: StartServerOptions = {}): void {
+export async function runHttp(options: StartServerOptions = {}): Promise<void> {
   const config = options.config ?? loadConfig();
-  const { server, url } = startServer({ ...options, config });
+  const { server, url } = await startServer({ ...options, config });
   console.error(
     `[bark-mcp] v${VERSION} 已启动 ${url}\n` +
       `  游乐场   ${url}/\n` +

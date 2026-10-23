@@ -264,7 +264,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       if (port !== undefined) process.env.BARK_PORT = String(port);
       const host = flagString(flags, "host");
       if (host) process.env.BARK_HOST = host;
-      runHttp({ config });
+      await runHttp({ config });
       return 0;
     }
   }

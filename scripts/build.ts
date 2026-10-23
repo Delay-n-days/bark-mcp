@@ -65,7 +65,28 @@ if (smoke.exitCode !== 0 || !stdout.includes("bark-mcp v")) {
   console.error("冒烟测试失败：", smoke.exitCode, stdout, smoke.stderr.toString());
   process.exit(1);
 }
-console.log("✔ 冒烟测试通过（--version）");
+console.log("✔ 冒烟测试通过（--version，Bun）");
+
+/**
+ * Node 兼容性冒烟：产物要能在 Node ≥ 20 上跑 CLI 与 stdio，
+ * 否则 `node dist/bark-mcp.js` 会在用户那里直接炸。
+ */
+const nodeBin = Bun.which("node");
+if (nodeBin) {
+  const nodeSmoke = Bun.spawnSync({
+    cmd: [nodeBin, join(outdir, "bark-mcp.js"), "--version"],
+    cwd: outdir,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (nodeSmoke.exitCode !== 0 || !nodeSmoke.stdout.toString().includes("bark-mcp v")) {
+    console.error("Node 冒烟测试失败：", nodeSmoke.exitCode, nodeSmoke.stdout.toString(), nodeSmoke.stderr.toString());
+    process.exit(1);
+  }
+  console.log("✔ 冒烟测试通过（--version，Node）");
+} else {
+  console.log("· 跳过 Node 冒烟测试（未找到 node）");
+}
 
 const files = await readdir(outdir);
 console.log(`\ndist/ 内容: ${files.join(", ")}`);

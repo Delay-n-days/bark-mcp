@@ -32,7 +32,7 @@ let base = "";
 let stop: () => Promise<void> = async () => {};
 
 beforeAll(async () => {
-  const { server, url } = startServer({
+  const { server, url } = await startServer({
     config: testConfig(),
     host: "127.0.0.1",
     port: 0,
@@ -235,5 +235,23 @@ describe("/mcp", () => {
       body: rpc("tools/list", {}),
     });
     expect(res.status).toBe(404);
+  });
+});
+
+describe("Node 兼容入口", () => {
+  it("startServer 返回 Promise，且 stop 能真正释放端口", async () => {
+    const { server, url } = await startServer({
+      config: testConfig(),
+      host: "127.0.0.1",
+      port: 0,
+      requireAuth: false,
+    });
+    const res = await fetch(`${url}/api/config`);
+    expect(res.status).toBe(200);
+    const port = server.port;
+    await server.stop(true);
+    // 端口已释放：再连应当失败
+    await expect(fetch(`${url}/api/config`)).rejects.toThrow();
+    expect(port).toBeGreaterThan(0);
   });
 });
