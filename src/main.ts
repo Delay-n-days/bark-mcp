@@ -1,4 +1,3 @@
-#!/usr/bin/env bun
 /**
  * 单文件入口。编译后只有 dist/bark-mcp.js 一个文件。
  *
@@ -25,6 +24,8 @@ import { runHttp } from "./http.ts";
 import { runStdio } from "./mcp/stdio.ts";
 import { VERSION } from "./mcp/server.ts";
 import { SCENARIO_GROUPS, findScenario } from "./scenarios.ts";
+import { pathToFileURL } from "node:url";
+import { resolve } from "node:path";
 
 const HELP = `bark-mcp v${VERSION} — Bark 推送测试台 + MCP 服务
 
@@ -270,7 +271,21 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   }
 }
 
-if (import.meta.main) {
+/**
+ * 入口判定：不依赖 `import.meta.main`（Node 20/22 没有这个属性），
+ * 只在「本文件被直接执行」时启动。作为库 import 时不动作。
+ */
+const invokedDirectly = (() => {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return import.meta.url === pathToFileURL(resolve(entry)).href;
+  } catch {
+    return false;
+  }
+})();
+
+if (invokedDirectly) {
   try {
     const code = await main();
     if (code !== 0) process.exit(code);

@@ -1,7 +1,9 @@
 /**
  * HTTP 层测试：真起一个 server（随机端口），验证认证、API 与 MCP 端点。
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { after, before, describe, it } from "node:test";
+
+import { expect } from "./assert.ts";
 
 import type { AppConfig } from "../src/config.ts";
 import { startServer } from "../src/http.ts";
@@ -31,7 +33,7 @@ const fakeFetch = (async (_url: string, init: RequestInit) => {
 let base = "";
 let stop: () => Promise<void> = async () => {};
 
-beforeAll(async () => {
+before(async () => {
   const { server, url } = await startServer({
     config: testConfig(),
     host: "127.0.0.1",
@@ -45,7 +47,7 @@ beforeAll(async () => {
   };
 });
 
-afterAll(async () => {
+after(async () => {
   await stop();
 });
 

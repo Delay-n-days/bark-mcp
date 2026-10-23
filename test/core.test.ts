@@ -1,7 +1,8 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "./assert.ts";
 
 import { buildPayload, isSuccess, mask, pushNotification } from "../src/bark.ts";
 import { existsSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 
 import { ALGORITHMS, ALGOS, DEFAULT_KEYS, loadEnv, loadKeys, type AppConfig } from "../src/config.ts";
 import { decryptBytes, encryptBytes, encryptJson, randomIv } from "../src/crypto.ts";
@@ -193,7 +194,7 @@ describe("默认密钥", () => {
 
   it("文件里的合法密钥优先于默认值", async () => {
     const file = `/tmp/bark-file-keys-${crypto.randomUUID()}.json`;
-    await Bun.write(file, JSON.stringify({ "aes-128": "FILEKEY123456789", "aes-192": "bad" }));
+    await writeFile(file, JSON.stringify({ "aes-128": "FILEKEY123456789", "aes-192": "bad" }), "utf8");
     const keys = loadKeys(file);
     expect(keys["aes-128"]).toBe("FILEKEY123456789");
     expect(keys["aes-192"]).toBe(DEFAULT_KEYS["aes-192"]);

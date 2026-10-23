@@ -1,7 +1,9 @@
 /**
  * MCP 层测试：直接驱动 Session，不启进程。
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "./assert.ts";
+
+import { readFile } from "node:fs/promises";
 
 import type { AppConfig } from "../src/config.ts";
 import { createSession } from "../src/mcp/server.ts";
@@ -207,7 +209,7 @@ describe("状态与密钥", () => {
     const text = result.content[0]?.text ?? "";
     const generated = /新密钥: (\w{24})/.exec(text)?.[1] ?? "";
     expect(generated).toHaveLength(24);
-    const saved = JSON.parse(await Bun.file(keysFile).text());
+    const saved = JSON.parse(await readFile(keysFile, "utf8"));
     expect(saved["aes-192"]).toBe(generated);
     expect(config.keys["aes-192"]).toBe(generated);
   });

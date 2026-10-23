@@ -1,0 +1,67 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版本号（仅 workflow_dispatch 时用于打 tag 名，例如 1.0.1）"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci || npm install
+
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: 构建单文件产物
+        run: npm run build
+
+      - name: 确认产物可在 Node 20 运行
+        run: |
+          npx --yes node@20 dist/bark-mcp.js --version
+          npx --yes node@22 dist/bark-mcp.js --version
+
+      - name: 打包 tgz
+        id: pack
+        run: |
+          TGZ=$(npm pack --silent | tail -1)
+          echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
+          echo "打包产物: $TGZ"
+          tar -tzf "$TGZ"
+
+      - name: 用 npx 实测 tgz 可直接运行
+        run: |
+          TGZ="${{ steps.pack.outputs.tgz }}"
+          BARK_KEY=dummy npx -y "./$TGZ" --version
+          BARK_KEY=dummy npx -y "./$TGZ" scenarios | head -5
+
+      - name: 上传 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bark-mcp-tgz
+          path: ${{ steps.pack.outputs.tgz }}
+          if-no-files-found: error
+
+      - name: 附加到 GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.pack.outputs.tgz }}
+          generate_release_notes: true

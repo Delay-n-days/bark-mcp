@@ -10,11 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
-      - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun test
-      # 单文件产物必须能独立启动（脚本内部会跑 --version 冒烟测试）
-      - run: bun run build
+          node-version: 22
+          cache: npm
+      - run: npm ci || npm install
+      - run: npm run typecheck
+      - run: npm run build
+      # 产物必须能在最低支持版本上跑
+      - run: npx --yes node@20 dist/bark-mcp.js --version
+      # 单文件产物必须与源码一致
+      - name: 检查 dist 是否已提交
+        run: |
+          if ! git diff --quiet -- dist/bark-mcp.js; then
+            echo "::error::dist/bark-mcp.js 与源码不一致，请本地 npm run build 后提交"
+            git --no-pager diff --stat -- dist/bark-mcp.js
+            exit 1
+          fi

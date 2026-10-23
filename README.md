@@ -283,3 +283,58 @@ python-legacy/    最初的 FastAPI 实现，仅作参考
 ## License
 
 MIT
+
+---
+
+## 用 npx 部署 stdio MCP（只有 Node 也能跑）
+
+产物是**纯 Node**的单个 JS 文件（MCP SDK 已打包进去），不需要 Bun，也不需要额外依赖。
+
+### 1. 拿到 tgz 的直链
+
+CI（`.github/workflows/release.yml`）在打 `v*` tag 时会把 tgz 挂到 Release 上：
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+然后 tgz 地址形如：
+
+```
+https://github.com/Delay-n-days/bark-mcp/releases/download/v1.0.0/bark-mcp-1.0.0.tgz
+```
+
+### 2. 写进 MCP 配置
+
+```json
+{
+  "mcpServers": {
+    "bark": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "https://github.com/Delay-n-days/bark-mcp/releases/download/v1.0.0/bark-mcp-1.0.0.tgz",
+        "mcp"
+      ],
+      "env": {
+        "BARK_KEY": "你的-device-key",
+        "BARK_SERVER": "https://api.day.app"
+      }
+    }
+  }
+}
+```
+
+先自检一次：
+
+```bash
+npx -y https://github.com/.../bark-mcp-1.0.0.tgz --version
+npx -y https://github.com/.../bark-mcp-1.0.0.tgz mcp    # 会等 stdin 上的 JSON-RPC
+```
+
+### 注意事项
+
+- **URL 后面必须紧跟 `mcp` 参数**，否则默认进 `serve` 模式（起 Web 服务），stdio 客户端会连不上。
+- npm 会缓存 tgz，升级版本后建议 `npx -y <新地址>` 或清缓存（`npm cache clean --force`）。URL 里带版本号的 Release 直链天然避开了这个问题。
+- GitHub Release 的 assets 直链会 302 到 `objects.githubusercontent.com`，`npx`/npm 能正常跟随；私有仓库需要 `GITHUB_TOKEN`，所以**仓库必须是公开的**。
+- 如果公司网络拦 GitHub，可以改用 jsDelivr 或对象存储托管同一个 tgz，`npx -y` 只认 HTTP 可下载的 tar 包。

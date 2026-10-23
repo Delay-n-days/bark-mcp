@@ -1,7 +1,7 @@
 {
   "name": "bark-mcp",
   "version": "1.0.0",
-  "description": "Bark 推送测试台 + MCP 服务：给大模型用的 iOS 推送（含 Bark 官方 AES 加密），Bun / Node 均可运行",
+  "description": "Bark 推送 + stdio MCP 服务：npx -y 即用，给大模型发 iOS 通知（含 Bark 官方 AES 加密）",
   "type": "module",
   "private": false,
   "bin": {
@@ -13,13 +13,13 @@
     "LICENSE"
   ],
   "scripts": {
-    "dev": "bun run src/main.ts",
-    "dev:mcp": "bun run src/main.ts mcp",
-    "dev:http": "bun run src/main.ts",
-    "build": "bun run scripts/build.ts",
-    "test": "bun test",
+    "build": "node --experimental-strip-types scripts/build.ts",
+    "start": "node dist/bark-mcp.js",
+    "serve": "node dist/bark-mcp.js",
+    "mcp": "node dist/bark-mcp.js mcp",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "serve": "bun dist/bark-mcp.js"
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "pack:tgz": "npm pack"
   },
   "keywords": [
     "bark",
@@ -28,16 +28,18 @@
     "model-context-protocol",
     "apns",
     "ios-push",
-    "bun"
+    "node",
+    "npx"
   ],
   "license": "MIT",
   "engines": {
-    "bun": ">=1.1.0",
-    "node": ">=20"
+    "node": ">=20",
+    "npm": ">=9"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@types/bun": "^1.2.0",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.28.2",
     "typescript": "^5.7.3"
   }
 }
