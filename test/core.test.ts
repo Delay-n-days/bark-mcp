@@ -173,7 +173,7 @@ describe("pushNotification", () => {
 describe("配置", () => {
   it("loadEnv 不覆盖已有变量", async () => {
     const file = `/tmp/bark-env-${crypto.randomUUID()}.env`;
-    await Bun.write(file, 'export BARK_TEST_KEY="from-file"\n# comment\nBARK_OTHER=1\n');
+    await writeFile(file, ["export BARK_TEST_KEY=\"from-file\"", "# comment", "BARK_OTHER=1", ""].join("\n"), "utf8");
     process.env.BARK_TEST_KEY = "from-env";
     loadEnv([file]);
     expect(process.env.BARK_TEST_KEY).toBe("from-env");

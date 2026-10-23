@@ -3,7 +3,7 @@
  *
  * 用 esbuild（不依赖 Bun）：
  * - `--platform=node --format=esm` 产出纯 Node 代码，Node 20+ 直接运行；
- * - `.html` 用 text loader 内联进产物，所以最终只有一个文件；
+ * - 页面由 `scripts/gen-web.ts` 生成为 TS 常量（见 src/web/index-html.generated.ts）；
  * - `@modelcontextprotocol/sdk` 一起打包，用户 `npx -y <tgz>` 不需要额外装依赖。
  */
 import { build } from "esbuild";
@@ -26,7 +26,6 @@ const result = await build({
   platform: "node",
   format: "esm",
   target: "node20",
-  loader: { ".html": "text" },
   minify,
   sourcemap: process.argv.includes("--sourcemap") ? "linked" : false,
   legalComments: "none",

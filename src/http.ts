@@ -31,13 +31,7 @@ import {
 import { createSession, VERSION } from "./mcp/server.ts";
 import { serveNode } from "./node-adapter.ts";
 import { SCENARIO_GROUPS, findScenario } from "./scenarios.ts";
-import INDEX_HTML_RAW from "./web/index.html" with { type: "text" };
-
-/**
- * Bun 的 `.html` 导入默认是 HTMLBundle，加 `type: "text"` 后运行时是字符串；
- * bun-types 还没跟上这个差异，这里显式收敛成 string。
- */
-const INDEX_HTML: string = INDEX_HTML_RAW as unknown as string;
+import INDEX_HTML from "./web/index-html.generated.ts";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 8787;

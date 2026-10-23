@@ -13,13 +13,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "node --experimental-strip-types scripts/build.ts",
+    "build": "node --experimental-strip-types scripts/gen-web.ts && node --experimental-strip-types scripts/build.ts",
     "start": "node dist/bark-mcp.js",
     "serve": "node dist/bark-mcp.js",
     "mcp": "node dist/bark-mcp.js mcp",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
-    "pack:tgz": "npm pack"
+    "pack:tgz": "npm pack",
+    "prepack": "npm run build"
   },
   "keywords": [
     "bark",

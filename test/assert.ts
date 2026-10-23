@@ -13,10 +13,13 @@ function fail(message: string): never {
 }
 
 class Expectation {
-  constructor(
-    private readonly actual: unknown,
-    private readonly negated = false,
-  ) {}
+  private readonly actual: unknown;
+  private readonly negated: boolean;
+
+  constructor(actual: unknown, negated = false) {
+    this.actual = actual;
+    this.negated = negated;
+  }
 
   get not(): Expectation {
     return new Expectation(this.actual, !this.negated);
@@ -70,6 +73,27 @@ class Expectation {
         ? this.actual.length
         : undefined;
     this.check(actualLength === length, () => `expected length ${length}, got ${actualLength}`);
+  }
+
+  toMatch(pattern: RegExp): void {
+    const actual = typeof this.actual === "string" ? this.actual : String(this.actual);
+    this.check(pattern.test(actual), () => `expected ${JSON.stringify(actual)} to match ${pattern}`);
+  }
+
+  toThrow(pattern?: RegExp): void {
+    let thrown: unknown;
+    let didThrow = false;
+    try {
+      (this.actual as () => unknown)();
+    } catch (error) {
+      didThrow = true;
+      thrown = error;
+    }
+    if (!didThrow) fail("expected function to throw, but it returned");
+    if (pattern) {
+      const message = thrown instanceof Error ? thrown.message : String(thrown);
+      if (!pattern.test(message)) fail(`expected thrown ${JSON.stringify(message)} to match ${pattern}`);
+    }
   }
 
   toBeGreaterThan(value: number): void {
