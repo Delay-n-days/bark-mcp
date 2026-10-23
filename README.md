@@ -62,9 +62,13 @@ npx -y <tgz 直链> scenarios
 
 ### 方式 B：下载单文件
 
+从 Release 附件里取出 tgz，解压出 `package/dist/bark-mcp.js`，或直接 clone 后本地构建。
+（`dist/` 不进 git，见 [发布与 CI](#发布与-ci)。）
+
 ```bash
-curl -L -o bark-mcp.js https://raw.githubusercontent.com/Delay-n-days/bark-mcp/master/dist/bark-mcp.js
-node bark-mcp.js mcp
+curl -L -o bark.tgz https://github.com/Delay-n-days/bark-mcp/releases/download/v1.0.0/bark-mcp-1.0.0.tgz
+tar -xzf bark.tgz package/dist/bark-mcp.js
+node package/dist/bark-mcp.js mcp
 ```
 
 ```json
@@ -242,7 +246,7 @@ curl -X POST http://127.0.0.1:8787/api/push \
 
 | 工作流 | 触发 | 做什么 |
 | --- | --- | --- |
-| `.github/workflows/ci.yml` | push / PR | typecheck → build → 用 `node@20` 跑产物 → 校验 `dist/` 已提交 |
+| `.github/workflows/ci.yml` | push / PR | typecheck → build → 用 `node@20` 跑产物 |
 | `.github/workflows/release.yml` | 打 `v*` tag / 手动 | 同时用 Node 20 与 22 验证 → `npm pack` → **用 `npx -y ./xxx.tgz` 实测** → 上传 artifact + 附到 Release |
 
 出 tgz：
@@ -258,6 +262,9 @@ npm pack            # → bark-mcp-1.0.0.tgz
 ```
 
 tgz 里只有 4 个文件：`package.json`、`dist/bark-mcp.js`、`README.md`、`LICENSE`。
+
+**构建产物不进 git**：`dist/` 与 `src/web/index-html.generated.ts` 都由 CI 现场生成，
+只存在于 Release 附件和 workflow artifact 里。仓库因此保持纯源码，改动可 diff。
 
 ### npx 部署的注意事项
 

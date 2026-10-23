@@ -13,14 +13,18 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "node --experimental-strip-types scripts/gen-web.ts && node --experimental-strip-types scripts/build.ts",
+    "gen:web": "node --experimental-strip-types scripts/gen-web.ts",
+    "prebuild": "npm run gen:web",
+    "build": "node --experimental-strip-types scripts/build.ts",
+    "pretypecheck": "npm run gen:web",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run gen:web",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "prepack": "npm run build",
     "start": "node dist/bark-mcp.js",
     "serve": "node dist/bark-mcp.js",
     "mcp": "node dist/bark-mcp.js mcp",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --experimental-strip-types --test test/*.test.ts",
-    "pack:tgz": "npm pack",
-    "prepack": "npm run build"
+    "pack:tgz": "npm pack"
   },
   "keywords": [
     "bark",

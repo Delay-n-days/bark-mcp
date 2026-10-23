@@ -2,16 +2,14 @@ node_modules/
 .env
 crypto_keys.json
 *.local
+*.tgz
+*.log
 .DS_Store
 python-legacy/.venv/
 __pycache__/
 
-# dist/ 只提交单文件产物，bunx 直接可用
-dist/*
-!dist/bark-mcp.js
+# 构建产物：只由 CI 生成并附到 Release，不进 git
+dist/
 
-# 打包产物
-*.tgz
-
-# 运行时日志
-*.log
+# 由 scripts/gen-web.ts 从 src/web/index.html 生成
+src/web/index-html.generated.ts
