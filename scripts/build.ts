@@ -41,7 +41,9 @@ const code = await readFile(outfile, "utf8");
 if (!code.startsWith("#!")) {
   await writeFile(outfile, `#!/usr/bin/env node\n${code}`, "utf8");
 }
-if (process.platform !== "win32") await chmod(outfile, 0o755);
+// 所有平台都尝试 chmod（Windows 上是 no-op），保证「产物与源码一致」的校验
+// 不会因为 git 记录的 mode 差异而在 CI 上失败。
+await chmod(outfile, 0o755).catch(() => undefined);
 
 /** 冒烟：产物必须能在 Node 下自报版本（GUI 无关、不连网）。 */
 const { spawnSync } = await import("node:child_process");

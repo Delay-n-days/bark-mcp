@@ -22,7 +22,8 @@ jobs:
       # 单文件产物必须与源码一致
       - name: 检查 dist 是否已提交
         run: |
-          if ! git diff --quiet -- dist/bark-mcp.js; then
+          # core.fileMode=false：只比对内容，忽略 chmod 造成的 mode 差异
+          if ! git -c core.fileMode=false diff --quiet -- dist/bark-mcp.js; then
             echo "::error::dist/bark-mcp.js 与源码不一致，请本地 npm run build 后提交"
             git --no-pager diff --stat -- dist/bark-mcp.js
             exit 1

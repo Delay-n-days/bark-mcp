@@ -1,2 +1,4 @@
 * text=auto eol=lf
 *.js binary
+# 产物是可直接执行的脚本，固定可执行位，避免 CI 上 mode 差异
+*.js binary
