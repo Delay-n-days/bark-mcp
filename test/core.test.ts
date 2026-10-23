@@ -1,7 +1,9 @@
 import { describe, expect, it } from "bun:test";
 
 import { buildPayload, isSuccess, mask, pushNotification } from "../src/bark.ts";
-import { ALGORITHMS, ALGOS, loadEnv, type AppConfig } from "../src/config.ts";
+import { existsSync } from "node:fs";
+
+import { ALGORITHMS, ALGOS, DEFAULT_KEYS, loadEnv, loadKeys, type AppConfig } from "../src/config.ts";
 import { decryptBytes, encryptBytes, encryptJson, randomIv } from "../src/crypto.ts";
 
 const key = "1234567890123456";
@@ -177,5 +179,30 @@ describe("配置", () => {
     expect(process.env.BARK_OTHER).toBe("1");
     delete process.env.BARK_TEST_KEY;
     delete process.env.BARK_OTHER;
+  });
+});
+
+describe("默认密钥", () => {
+  it("没有密钥文件时用写死的默认值", () => {
+    const file = `/tmp/bark-default-keys-${crypto.randomUUID()}.json`;
+    const keys = loadKeys(file);
+    expect(keys).toEqual(DEFAULT_KEYS);
+    // 默认值不该被固化成文件
+    expect(existsSync(file)).toBe(false);
+  });
+
+  it("文件里的合法密钥优先于默认值", async () => {
+    const file = `/tmp/bark-file-keys-${crypto.randomUUID()}.json`;
+    await Bun.write(file, JSON.stringify({ "aes-128": "FILEKEY123456789", "aes-192": "bad" }));
+    const keys = loadKeys(file);
+    expect(keys["aes-128"]).toBe("FILEKEY123456789");
+    expect(keys["aes-192"]).toBe(DEFAULT_KEYS["aes-192"]);
+    expect(keys["aes-256"]).toBe(DEFAULT_KEYS["aes-256"]);
+  });
+
+  it("密钥长度符合算法要求", () => {
+    for (const algorithm of ALGORITHMS) {
+      expect(DEFAULT_KEYS[algorithm]).toHaveLength(ALGOS[algorithm]);
+    }
   });
 });

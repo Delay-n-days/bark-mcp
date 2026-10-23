@@ -59,7 +59,7 @@ bun run build      # 产出 dist/bark-mcp.js 并做冒烟测试
 | `BARK_REQUIRE_AUTH` | 未设置 | 设为 `1` 时即使只监听本机也校验令牌 |
 | `BARK_MCP_TOKEN` | 空 | 想用别的字符串当令牌时设置它（不强依赖 `BARK_KEY`） |
 | `BARK_ALLOW_CUSTOM_KEY` | `1` | 设为 `0` 后调用方不能自带 `device_key` |
-| `BARK_KEYS_FILE` | `./crypto_keys.json` | 加密密钥落盘位置，首次运行自动生成 |
+| `BARK_KEYS_FILE` | `./crypto_keys.json` | 自定义密钥文件；文件里合法的密钥优先于内置默认值 |
 
 `.env` 示例见 [`.env.example`](.env.example)。
 
@@ -177,9 +177,23 @@ HTTP 模式是有状态的：一次 `initialize` 建立一个会话，服务端�
 Bark App 首页 →「推送加密」里填算法、模式和 KEY；服务端 `/api/config`（或 `bark_crypto_keys`）给出同一份密钥即可互通。
 
 ```bash
-bun dist/bark-mcp.js key            # 查看
-bun dist/bark-mcp.js key --regen aes-256
+bun dist/bark-mcp.js key            # 查看当前密钥
+bun dist/bark-mcp.js key --regen aes-256   # 生成新 key 并写入密钥文件
 ```
+
+**默认密钥写死在 `src/config.ts` 的 `DEFAULT_KEYS` 里**，所以单文件产物丢到任何机器上都能和 App 对上，不需要额外文件：
+
+```json
+{
+  "aes-128": "YChh4ziPE1eeaFZU",
+  "aes-192": "0mLAQ5oJmqdVUWajtjVEAy4K",
+  "aes-256": "K9tq3DK7MbidKqRUoJeJdvcxpOKHeFDX"
+}
+```
+
+优先级：`BARK_KEYS_FILE` 指向的文件里的合法值 > 内置 `DEFAULT_KEYS`。
+想换成自己的 key，改 `DEFAULT_KEYS` 重新 `bun run build`，或用 `BARK_KEYS_FILE` 指一个自己的密钥文件；
+纯读默认值时不会落盘，只有 `--regen` 或文件里已有有效 key 才会写 `crypto_keys.json`。
 
 实现要点：
 
@@ -235,8 +249,8 @@ python-legacy/    最初的 FastAPI 实现，仅作参考
 
 ## 安全说明
 
-- 单文件产物里**不含**你的 `BARK_KEY` 和加密密钥；它们在运行时从环境变量 / `.env` / `crypto_keys.json` 读取。
-- `crypto_keys.json` 与 `.env` 已加入 `.gitignore`，别提交。
+- 单文件产物里**不含** `BARK_KEY`（运行时从环境变量 / `.env` 读取）；加密密钥是写死的默认值，按设计不保密，`BARK_KEY` 才是真正的凭证。
+- `.env` 与 `crypto_keys.json` 已加入 `.gitignore`，别提交。
 - 监听非回环地址时必须配置令牌，否则进程直接拒绝启动。
 - 任何拿到 `BARK_KEY` 的人都能给你的手机发通知，泄漏后请在 Bark App 里重置设备 key。
 

@@ -20,6 +20,19 @@ export type CryptoKeys = Record<Algorithm, string>;
 export const DEFAULT_SERVER = "https://api.day.app";
 export const KEYS_FILE_NAME = "crypto_keys.json";
 
+/**
+ * 写死的默认加密密钥。
+ *
+ * 用途：单文件产物丢到任何机器上，不需要 `crypto_keys.json` 也能和手机 App
+ * 里配置的 KEY 对上。要在 App 里换 key 就改这里重新构建，或设置
+ * `BARK_KEYS_FILE` 指向自己的密钥文件（文件优先）。
+ */
+export const DEFAULT_KEYS: CryptoKeys = {
+  "aes-128": "YChh4ziPE1eeaFZU",
+  "aes-192": "0mLAQ5oJmqdVUWajtjVEAy4K",
+  "aes-256": "K9tq3DK7MbidKqRUoJeJdvcxpOKHeFDX",
+};
+
 export const isAlgorithm = (v: unknown): v is Algorithm =>
   typeof v === "string" && Object.hasOwn(ALGOS, v);
 export const isMode = (v: unknown): v is Mode =>
@@ -124,18 +137,22 @@ export function saveKeys(file: string, keys: CryptoKeys): void {
   writeFileSync(file, `${JSON.stringify(keys, null, 2)}\n`, "utf8");
 }
 
-/** 读取本地密钥；缺失/长度不符的算法自动补一个新的并落盘。 */
+/** 读取本地密钥：文件里的合法值优先，否则用写死的 DEFAULT_KEYS。 */
 export function loadKeys(file: string): CryptoKeys {
   const saved = readKeysFile(file);
   const keys = {} as CryptoKeys;
+  let fromFile = false;
   for (const algorithm of ALGORITHMS) {
     const candidate = saved[algorithm];
-    keys[algorithm] =
-      typeof candidate === "string" && candidate.length === ALGOS[algorithm]
-        ? candidate
-        : randomString(ALGOS[algorithm]);
+    if (typeof candidate === "string" && candidate.length === ALGOS[algorithm]) {
+      keys[algorithm] = candidate;
+      fromFile = true;
+    } else {
+      keys[algorithm] = DEFAULT_KEYS[algorithm];
+    }
   }
-  saveKeys(file, keys);
+  // 只在文件里确实有有效密钥时回写，避免默认值被无谓地固化成文件
+  if (fromFile) saveKeys(file, keys);
   return keys;
 }
 
